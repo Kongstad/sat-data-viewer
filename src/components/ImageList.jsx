@@ -25,8 +25,9 @@ import { getSignedUrl } from '../utils/stacApi';
  * @param {string} currentCollection - Current satellite collection
  * @param {Object} selectedBands - Map of imageId to selected band
  * @param {Function} onBandChange - Callback when user changes band
+ * @param {Function} onShowInfo - Callback to show tile metadata info
  */
-function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, selectedImages = [], isLoading, currentCollection, selectedBands = {}, onBandChange }) {
+function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, selectedImages = [], isLoading, currentCollection, selectedBands = {}, onBandChange, onShowInfo }) {
   
   // Loading state
   if (isLoading) {
@@ -124,7 +125,7 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
                 <div className="image-date">
                   {item.collection === 'cop-dem-glo-30' ? 'Elevation Data' : item.date}
                 </div>
-                {item.collection !== 'cop-dem-glo-30' && (
+                {item.collection === 'sentinel-2-l2a' && (
                   <>
                     <div className="image-cloud">
                       Cloud: {item.cloudCover}%
@@ -133,6 +134,41 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
                       Tile: {item.id.split('_').slice(-2, -1)[0] || item.id.substring(0, 10)}
                     </div>
                   </>
+                )}
+                {item.collection === 'landsat-c2-l2' && (
+                  <div className="image-cloud">
+                    Cloud: {item.cloudCover}%
+                  </div>
+                )}
+                
+                {/* Band selector for Sentinel-2 */}
+                {item.collection === 'sentinel-2-l2a' && (
+                  <div className="band-selector-grid">
+                    <button
+                      className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === 'visual') ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'visual')}
+                    >
+                      TCI
+                    </button>
+                    <button
+                      className={`band-button ${selectedBands[item.id] === 'nir' ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'nir')}
+                    >
+                      IR
+                    </button>
+                    <button
+                      className={`band-button ${selectedBands[item.id] === 'swir' ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'swir')}
+                    >
+                      SWIR
+                    </button>
+                    <button
+                      className={`band-button ${selectedBands[item.id] === 'rededge' ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'rededge')}
+                    >
+                      Red Edge
+                    </button>
+                  </div>
                 )}
                 
                 {/* Band selector for Sentinel-1 */}
@@ -149,6 +185,54 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
                       onClick={() => onBandChange(item.id, 'vh')}
                     >
                       Show VH
+                    </button>
+                  </div>
+                )}
+                
+                {/* Band selector for Landsat */}
+                {item.collection === 'landsat-c2-l2' && (
+                  <div className="band-selector-grid">
+                    <button
+                      className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === 'tci') ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'tci')}
+                    >
+                      TCI
+                    </button>
+                    <button
+                      className={`band-button ${selectedBands[item.id] === 'nir' ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'nir')}
+                    >
+                      NIR
+                    </button>
+                    <button
+                      className={`band-button ${selectedBands[item.id] === 'swir' ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'swir')}
+                    >
+                      SWIR
+                    </button>
+                    <button
+                      className={`band-button ${selectedBands[item.id] === 'thermal' ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'thermal')}
+                    >
+                      Thermal
+                    </button>
+                  </div>
+                )}
+                
+                {/* Band selector for MODIS */}
+                {item.collection === 'modis-13Q1-061' && (
+                  <div className="band-selector">
+                    <button
+                      className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === 'ndvi') ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'ndvi')}
+                    >
+                      NDVI
+                    </button>
+                    <button
+                      className={`band-button ${selectedBands[item.id] === 'evi' ? 'active' : ''}`}
+                      onClick={() => onBandChange(item.id, 'evi')}
+                    >
+                      EVI
                     </button>
                   </div>
                 )}
@@ -170,6 +254,23 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
                     </svg>
                   </button>
                 )}
+                
+                {/* Info button */}
+                {onShowInfo && (
+                  <button 
+                    className="info-button"
+                    onClick={() => onShowInfo(item)}
+                    title="Show tile metadata"
+                    aria-label="Show metadata"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="10" cy="10" r="7" stroke="#1976D2" strokeWidth="2"/>
+                      <path d="M10 9V14" stroke="#1976D2" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="10" cy="6.5" r="0.5" fill="#1976D2" stroke="#1976D2" strokeWidth="1"/>
+                    </svg>
+                  </button>
+                )}
+                
                 {/* Download GeoTIFF button */}
                 <button 
                   className="download-button"

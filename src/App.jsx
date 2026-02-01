@@ -29,6 +29,8 @@ function App() {
   const [currentCollection, setCurrentCollection] = useState('sentinel-2-l2a');
   const [selectedBands, setSelectedBands] = useState({}); // Maps imageId -> band name (e.g., 'vv' or 'vh')
   const [elevationRange, setElevationRange] = useState({ min: -10, max: 150 }); // Elevation range for DEM visualization
+  const [thermalRange, setThermalRange] = useState({ min: 28000, max: 55000 }); // Thermal range for Landsat thermal band
+  const [selectedTileInfo, setSelectedTileInfo] = useState(null); // STAC metadata for info display
 
   /**
    * Handle search submission from SearchBar component
@@ -140,6 +142,13 @@ function App() {
     }));
   };
 
+  /**
+   * Handle showing tile metadata info
+   */
+  const handleShowInfo = (tileData) => {
+    setSelectedTileInfo(tileData);
+  };
+
   return (
     <div className="app">
       {/* Header */}
@@ -157,6 +166,9 @@ function App() {
             isLoading={isLoading}
             elevationRange={elevationRange}
             onElevationRangeChange={setElevationRange}
+            thermalRange={thermalRange}
+            onThermalRangeChange={setThermalRange}
+            selectedBands={selectedBands}
           />
           
           <div className="sidebar-spacer" />
@@ -169,7 +181,7 @@ function App() {
             selectedImages={selectedImages}
             isLoading={isLoading}            currentCollection={currentCollection}
             selectedBands={selectedBands}
-            onBandChange={handleBandChange}          />
+            onBandChange={handleBandChange}            onShowInfo={handleShowInfo}          />
         </aside>
 
         {/* Map Area */}
@@ -179,7 +191,9 @@ function App() {
             searchResults={searchResults}
             onBboxChange={handleBboxChange}
             onZoomToImage={handleZoomToImage}            currentCollection={currentCollection}
-            selectedBands={selectedBands}            elevationRange={elevationRange}          />
+            selectedBands={selectedBands}            elevationRange={elevationRange}            thermalRange={thermalRange}
+            selectedTileInfo={selectedTileInfo}
+            onCloseTileInfo={() => setSelectedTileInfo(null)}          />
         </main>
       </div>
 

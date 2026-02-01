@@ -206,3 +206,85 @@
   font-size: 12px;
   color: #666;
 }
+
+/* STAC Metadata Info Box */
+.stac-info-box {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: rgba(255, 255, 255, 0.98);
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+  min-width: 280px;
+  max-width: 400px;
+  max-height: 400px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.stac-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.stac-info-header .close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  font-weight: 300;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+
+.stac-info-header .close-btn:hover {
+  transform: scale(1.2);
+}
+
+.stac-info-content {
+  padding: 12px 16px;
+  overflow-y: auto;
+  max-height: 340px;
+}
+
+.stac-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #e0e0e0;
+  gap: 12px;
+}
+
+.stac-info-row:last-child {
+  border-bottom: none;
+}
+
+.stac-info-row .label {
+  font-weight: 600;
+  color: #555;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.stac-info-row .value {
+  color: #333;
+  font-size: 12px;
+  text-align: right;
+  word-break: break-all;
+  font-family: 'Courier New', monospace;
+}

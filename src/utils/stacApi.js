@@ -23,6 +23,17 @@ const CURRENT_PROVIDER = 'microsoft';
 const STAC_API_URL = STAC_PROVIDERS[CURRENT_PROVIDER];
 
 /**
+ * Get the display name of the current provider
+ */
+export function getProviderName() {
+  const names = {
+    microsoft: 'Microsoft Planetary Computer',
+    element84: 'Element84 Earth Search'
+  };
+  return names[CURRENT_PROVIDER] || 'Unknown Provider';
+}
+
+/**
  * Search for satellite imagery from STAC API
  * 
  * @param {Array} bbox - Bounding box [minLon, minLat, maxLon, maxLat]
@@ -46,8 +57,8 @@ export async function searchSatelliteData(bbox, startDate, endDate, collection =
       searchParams.datetime = `${startDate}/${endDate}`;
     }
 
-    // Only add cloud cover filter for optical imagery (Sentinel-2)
-    if (collection === 'sentinel-2-l2a') {
+    // Only add cloud cover filter for optical imagery (Sentinel-2 and Landsat)
+    if (collection === 'sentinel-2-l2a' || collection === 'landsat-c2-l2') {
       searchParams.query = {
         'eo:cloud_cover': { lt: cloudCover }
       };
@@ -152,7 +163,9 @@ export function getAssetSize(asset) {
  */
 export function formatStacItem(item, collection = 'sentinel-2-l2a') {
   // Format date in Danish format (DD/MM/YYYY)
-  const date = new Date(item.properties.datetime);
+  // MODIS uses start_datetime, others use datetime
+  const dateString = item.properties.datetime || item.properties.start_datetime;
+  const date = new Date(dateString);
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
@@ -166,6 +179,8 @@ export function formatStacItem(item, collection = 'sentinel-2-l2a') {
     geometry: item.geometry,
     assets: item.assets,
     bbox: item.bbox,
-    collection: collection
+    collection: collection,
+    properties: item.properties, // Store full properties for metadata display
+    provider: getProviderName() // Add provider name
   };
 }
