@@ -1,0 +1,292 @@
+/* ImageList Styles */
+
+.image-list {
+  background: linear-gradient(145deg, #ffffff 0%, #f5f9fc 100%);
+  border: 1px solid rgba(25, 118, 210, 0.2);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.image-list h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.clear-button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-button:hover {
+  background: #c82333;
+}
+
+.list-note {
+  font-size: 12px;
+  color: #666;
+  margin: -10px 0 15px 0;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.image-list-scroll {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.image-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.image-item:hover {
+  border-color: #1976D2;
+  background-color: #f5f9fc;
+}
+
+.image-item.selected {
+  border-color: #1976D2;
+  background-color: #E3F2FD;
+}
+
+.image-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.image-item img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.no-thumbnail {
+  width: 100px;
+  height: 100px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.elevation-thumbnail {
+  width: 100px;
+  height: 100px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.elevation-thumbnail svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.image-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.image-date {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.image-cloud {
+  color: #666;
+  font-size: 12px;
+}
+
+.image-tile {
+  color: #1976D2;
+  font-size: 11px;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.image-size {
+  color: #666;
+  font-size: 11px;
+}
+
+/* Band selector for Sentinel-1 */
+.band-selector {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.band-button {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid #1976D2;
+  background: white;
+  color: #1976D2;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.band-button:hover {
+  background: rgba(25, 118, 210, 0.1);
+}
+
+.band-button.active {
+  background: #1976D2;
+  color: white;
+}
+
+/* Action buttons container */
+.image-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.zoom-button,
+.download-button {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 2px solid #1976D2;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Four arrows pointing outward - "zoom to fit" icon */
+.zoom-button::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #1976D2;
+  border-radius: 2px;
+}
+
+/* Top-left arrow */
+.zoom-button::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-left: 2px solid #1976D2;
+  border-top: 2px solid #1976D2;
+  top: 5px;
+  left: 5px;
+}
+
+/* Create additional arrows with a pseudo approach */
+.zoom-button:hover,
+.download-button:hover {
+  border-color: #0D47A1;
+  background-color: rgba(25, 118, 210, 0.05);
+  transform: scale(1.1);
+}
+
+.zoom-button:hover::before {
+  border-color: #0D47A1;
+}
+
+.zoom-button:hover::after {
+  border-color: #0D47A1;
+}
+
+.zoom-button:active,
+.download-button:active {
+  transform: scale(0.95);
+}
+
+/* Loading and empty states */
+.loading,
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: #666;
+}
+
+.empty-state p {
+  margin-bottom: 15px;
+  color: #555;
+}
+
+.empty-state ul {
+  text-align: left;
+  display: inline-block;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.empty-state li {
+  margin-bottom: 8px;
+  color: #666;
+}
+
+/* Scrollbar styling */
+.image-list-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.image-list-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.image-list-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.image-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
