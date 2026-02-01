@@ -1,8 +1,6 @@
 /**
- * Map Component using Leaflet
- * 
- * Displays an interactive map using Leaflet (no API key required for base maps)
- * Shows OpenStreetMap basemap and overlays STAC imagery when selected
+ * Leaflet map component with STAC tile rendering
+ * Handles multi-collection tile overlays, legends, and metadata display
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';

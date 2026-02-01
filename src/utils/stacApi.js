@@ -1,48 +1,25 @@
 /**
- * STAC API Utility
- * 
- * This file handles all interactions with Microsoft Planetary Computer's STAC API
- * STAC = SpatioTemporal Asset Catalog (standard for geospatial data)
- * 
- * Learning: In React, we separate API logic from UI components for:
- * - Reusability (can use these functions in multiple components)
- * - Testability (easier to test)
- * - Maintainability (API changes stay in one place)
+ * Microsoft Planetary Computer STAC API integration
  */
 
 import axios from 'axios';
 
-// STAC API endpoints
-const STAC_PROVIDERS = {
-  microsoft: 'https://planetarycomputer.microsoft.com/api/stac/v1',
-  element84: 'https://earth-search.aws.element84.com/v1'
-};
+const STAC_API_URL = 'https://planetarycomputer.microsoft.com/api/stac/v1';
 
-// Current provider (can be switched)
-const CURRENT_PROVIDER = 'microsoft';
-const STAC_API_URL = STAC_PROVIDERS[CURRENT_PROVIDER];
-
-/**
- * Get the display name of the current provider
- */
 export function getProviderName() {
-  const names = {
-    microsoft: 'Microsoft Planetary Computer',
-    element84: 'Element84 Earth Search'
-  };
-  return names[CURRENT_PROVIDER] || 'Unknown Provider';
+  return 'Microsoft Planetary Computer';
 }
 
 /**
- * Search for satellite imagery from STAC API
+ * Search for satellite data from STAC API
  * 
  * @param {Array} bbox - Bounding box [minLon, minLat, maxLon, maxLat]
- * @param {string} startDate - Start date in 'YYYY-MM-DD' format
- * @param {string} endDate - End date in 'YYYY-MM-DD' format
- * @param {string} collection - Collection name (e.g., 'sentinel-2-l2a', 'sentinel-1-rtc')
- * @param {number} cloudCover - Maximum cloud coverage percentage (0-100) - only for optical
- * @param {number} limit - Maximum number of results to return
- * @returns {Promise} - Promise resolving to STAC search results
+ * @param {string} startDate - Start date YYYY-MM-DD
+ * @param {string} endDate - End date YYYY-MM-DD
+ * @param {string} collection - Collection ID (sentinel-2-l2a, landsat-c2-l2, etc.)
+ * @param {number} cloudCover - Max cloud coverage % (optical collections only)
+ * @param {number} limit - Max results
+ * @returns {Promise} STAC FeatureCollection
  */
 export async function searchSatelliteData(bbox, startDate, endDate, collection = 'sentinel-2-l2a', cloudCover = 20, limit = 10) {
   try {
@@ -52,12 +29,12 @@ export async function searchSatelliteData(bbox, startDate, endDate, collection =
       limit: limit
     };
 
-    // DEM data is timeless - don't include datetime for static datasets
+    // Exclude datetime for static datasets like DEM
     if (collection !== 'cop-dem-glo-30') {
       searchParams.datetime = `${startDate}/${endDate}`;
     }
 
-    // Only add cloud cover filter for optical imagery (Sentinel-2 and Landsat)
+    // Cloud cover filter applies only to optical collections
     if (collection === 'sentinel-2-l2a' || collection === 'landsat-c2-l2') {
       searchParams.query = {
         'eo:cloud_cover': { lt: cloudCover }
@@ -67,19 +44,13 @@ export async function searchSatelliteData(bbox, startDate, endDate, collection =
     // POST request to STAC API
     const response = await axios.post(`${STAC_API_URL}/search`, searchParams);
 
-    console.log(`Using ${CURRENT_PROVIDER} STAC API - Collection: ${collection} - Found ${response.data.features?.length || 0} results`);
+    console.log(`Microsoft Planetary Computer - Collection: ${collection} - Found ${response.data.features?.length || 0} results`);
 
-    // Response is a GeoJSON FeatureCollection
     return response.data;
   } catch (error) {
     console.error('Error searching STAC API:', error);
     throw error;
   }
-}
-
-// Keep legacy function name for backwards compatibility
-export async function searchSentinel2(bbox, startDate, endDate, cloudCover = 20, limit = 10) {
-  return searchSatelliteData(bbox, startDate, endDate, 'sentinel-2-l2a', cloudCover, limit);
 }
 
 /**

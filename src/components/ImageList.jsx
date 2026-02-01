@@ -1,35 +1,12 @@
 /**
- * ImageList Component
- * 
- * Displays search results from STAC API as a scrollable list
- * Each item shows a thumbnail, date, and cloud coverage
- * 
- * Learning: This component demonstrates:
- * - Rendering lists in React (map function)
- * - Conditional rendering (showing different UI based on state)
- * - Event handling (onClick)
+ * Image results list component with band selectors and metadata
  */
 
 import './ImageList.css';
 import { getSignedUrl } from '../utils/stacApi';
 
-/**
- * ImageList Component
- * 
- * @param {Array} items - Array of formatted STAC items from search results
- * @param {Function} onToggleImage - Callback when user toggles checkbox
- * @param {Function} onClearSelections - Callback to clear all selections
- * @param {Function} onZoomToImage - Callback to zoom map to specific image
- * @param {Array} selectedImages - Array of currently selected image IDs
- * @param {boolean} isLoading - Whether search is in progress
- * @param {string} currentCollection - Current satellite collection
- * @param {Object} selectedBands - Map of imageId to selected band
- * @param {Function} onBandChange - Callback when user changes band
- * @param {Function} onShowInfo - Callback to show tile metadata info
- */
 function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, selectedImages = [], isLoading, currentCollection, selectedBands = {}, onBandChange, onShowInfo }) {
   
-  // Loading state
   if (isLoading) {
     return (
       <div className="image-list">
@@ -77,14 +54,7 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
           </button>
         )}
       </div>
-      <p className="list-note">Tip: Images with empty previews will be automatically hidden from the map if they contain no data.</p>
       <div className="image-list-scroll">
-        {/* 
-          React List Rendering:
-          - map() transforms each item into JSX
-          - key prop helps React track which items changed
-          - Similar to: [render_item(item) for item in items] in Python
-        */}
         {items.map((item) => {
           const isSelected = selectedImages.includes(item.id);
           return (
@@ -238,13 +208,11 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
                 )}
               </div>
 
-              {/* Action buttons */}
               <div className="image-actions">
-                {/* Zoom to tile button */}
-                {onZoomToImage && (
+                {onZoomToImage && onZoomToImage.current && (
                   <button 
                     className="zoom-button"
-                    onClick={() => onZoomToImage(item.id)}
+                    onClick={() => onZoomToImage.current(item.id)}
                     title="Focus on this tile"
                     aria-label="Focus on tile"
                   >

@@ -1,57 +1,30 @@
 /**
- * SearchBar Component
- * 
- * Learning: This is a React "functional component"
- * - It's a JavaScript function that returns JSX (HTML-like syntax)
- * - Props (properties) are parameters passed from parent components
- * - State is data that can change over time
+ * Search form component for STAC queries
  */
 
 import { useState } from 'react';
 import './SearchBar.css';
 
-/**
- * SearchBar Component
- * Allows users to input search criteria for satellite imagery
- * 
- * @param {Function} onSearch - Callback function when user submits search
- * @param {boolean} isLoading - Whether a search is currently in progress
- * @param {Object} elevationRange - Min/max elevation for DEM visualization
- * @param {Function} onElevationRangeChange - Callback when elevation range changes
- */
 function SearchBar({ onSearch, isLoading, elevationRange, onElevationRangeChange, thermalRange, onThermalRangeChange, selectedBands = {} }) {
-  // React Hook: useState manages component state
-  // Similar to: self.start_date = '2024-01-01' in Python class
-  // But useState causes re-render when value changes
-  const [startDate, setStartDate] = useState('2024-01-01');
-  const [endDate, setEndDate] = useState('2024-12-31');
+  const [startDate, setStartDate] = useState('2024-06-01');
+  const [endDate, setEndDate] = useState('2024-07-31');
   const [cloudCover, setCloudCover] = useState(20);
-  const [satellite, setSatellite] = useState('sentinel-2-l2a'); // Default to Sentinel-2
+  const [satellite, setSatellite] = useState('sentinel-2-l2a');
 
-  /**
-   * Handle start date change
-   * Automatically sets end date to 7 days after start date
-   */
   const handleStartDateChange = (e) => {
     const newStartDate = e.target.value;
     setStartDate(newStartDate);
     
-    // Calculate 7 days after start date
     const startDateObj = new Date(newStartDate);
     const endDateObj = new Date(startDateObj);
     endDateObj.setDate(endDateObj.getDate() + 7);
     
-    // Format as YYYY-MM-DD for date input
     const formattedEndDate = endDateObj.toISOString().split('T')[0];
     setEndDate(formattedEndDate);
   };
 
-  /**
-   * Handle form submission
-   * Learning: In React, we prevent default form behavior and handle it ourselves
-   */
   const handleSubmit = (e) => {
-    e.preventDefault(); // Prevent page reload (default form behavior)
+    e.preventDefault();
     
     // Call the parent's onSearch function with current values
     onSearch({
@@ -234,11 +207,9 @@ function SearchBar({ onSearch, isLoading, elevationRange, onElevationRangeChange
         </button>
       </form>
 
-      {/* Info Box */}
       <div className="search-info">
         <p>
-          <strong>Tip:</strong> Pan and zoom the map to select your area of interest,
-          then click Search to find satellite imagery.
+          Click "Set Search Point" on the map to define your search area.
         </p>
       </div>
     </div>
