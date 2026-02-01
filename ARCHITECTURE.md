@@ -90,11 +90,56 @@ Single source of truth for all satellite collections. Defines bands, rescale val
 ### stacApi.js
 Handles STAC API queries. Reads collection config to determine which filters to include (datetime, cloud cover). Formats raw STAC items for app consumption.
 
+## Component Hierarchy
+
+```
+App (state management)
+├── SearchBar (collection selector, date range, filters, sliders)
+├── ImageList (results with band selectors, metadata, action buttons)
+└── MapLeaflet (Leaflet map with COG tile overlays, legends, measurements)
+```
+
+## Data Flow
+
+1. User clicks "Set Search Point" → Map places blue rectangle
+2. User selects collection and parameters → SearchBar controls
+3. User submits search → App queries STAC API with collection filter
+4. Results returned → App formats items and updates ImageList
+5. User selects images and bands → App passes to MapLeaflet
+6. Map renders COG tiles → TiTiler serves tiles with band/colormap parameters
+7. User adjusts ranges → Map re-renders with new rescale values
+8. User clicks info button → Map displays STAC metadata overlay
+
+## STAC API Integration
+
+The app queries different collections based on user selection. Example for Sentinel-2:
+
+```javascript
+POST https://planetarycomputer.microsoft.com/api/stac/v1/search
+{
+  "collections": ["sentinel-2-l2a"],
+  "bbox": [minLon, minLat, maxLon, maxLat],
+  "datetime": "2024-01-01/2024-12-31",
+  "query": { "eo:cloud_cover": { "lt": 20 } },
+  "limit": 10
+}
+```
+
+Collection values: `sentinel-2-l2a`, `landsat-c2-l2`, `sentinel-1-rtc`, `modis-13Q1-061`, `cop-dem-glo-30`
+
+Response is a GeoJSON FeatureCollection with STAC items.
+
 ## Tile Rendering
 
 TiTiler URLs are built from config:
 ```
-/tiles/{z}/{x}/{y}?collection={c}&item={id}&assets={band}&rescale={min,max}&colormap_name={map}
+https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/
+  WebMercatorQuad/{z}/{x}/{y}@1x?
+  collection={collection}&
+  item={item_id}&
+  assets={band}&
+  rescale={min},{max}&
+  colormap_name={colormap}
 ```
 
 Visual (TCI) bands have no rescale/colormap. Single bands (NIR, SWIR, etc.) use rescale and colormap from config.
