@@ -1,5 +1,10 @@
 # Satellite Data Viewer
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Deploy](https://github.com/Kongstad/sat-data-viewer/actions/workflows/deploy.yml/badge.svg)](https://github.com/Kongstad/sat-data-viewer/actions/workflows/deploy.yml)
+[![React](https://img.shields.io/badge/React-19.2.0-61dafb?logo=react)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-7.2.4-646cff?logo=vite)](https://vitejs.dev/)
+
 Client-side web application for exploring satellite data collections from Microsoft Planetary Computer's STAC API. Supports optical imagery, SAR data, elevation models, and vegetation indices with interactive band selection and visualization controls.
 
 **Live Demo:** [https://kongstad.github.io/sat-data-viewer](https://kongstad.github.io/sat-data-viewer)

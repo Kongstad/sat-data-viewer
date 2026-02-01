@@ -390,7 +390,7 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
 
   return (
     <div className="map-wrapper">
-      <div ref={mapContainer} className="map-container" />
+      <div ref={mapContainer} className="map-container" data-testid="map-container" />
       
       {mapReady && (
         <>

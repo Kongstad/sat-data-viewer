@@ -53,7 +53,41 @@ No component changes are needed - the UI will automatically adapt.
 
 ### Testing
 
-Before submitting a PR, test:
+#### Running Tests
+
+```bash
+npm test              # Run all tests once
+npm run test:watch    # Run tests in watch mode
+npm run test:ui       # Run tests with UI
+```
+
+#### Writing Tests
+
+We use **Vitest** and **React Testing Library**:
+
+```javascript
+import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import MyComponent from './MyComponent';
+
+describe('MyComponent', () => {
+  it('renders without crashing', () => {
+    render(<MyComponent />);
+    expect(screen.getByText(/Hello/i)).toBeInTheDocument();
+  });
+});
+```
+
+#### Testing Guidelines
+
+- Test user-facing behavior, not implementation details
+- Use `data-testid` for elements without text/labels
+- Mock external dependencies (axios, Leaflet)
+- Keep tests simple and readable
+
+#### Pre-Submit Checklist
+
+Before submitting a PR, manually test:
 - Search functionality for all collections
 - Band switching and visualization
 - Measurement tools (distance/area)
