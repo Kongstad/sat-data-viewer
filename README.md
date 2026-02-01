@@ -1,33 +1,49 @@
 # Satellite Data Viewer
 
-A free, client-side web application for exploring Sentinel-2 satellite imagery from Microsoft Planetary Computer's STAC API. Built with React, Mapbox GL JS, and Vite.
+A free, client-side web application for exploring multiple satellite data collections from Microsoft Planetary Computer's STAC API. View optical imagery, SAR data, elevation models, and vegetation indices with interactive band selection and visualization controls. Built with React, Leaflet, and Vite.
 
 **Live Demo:** [https://kongstad.github.io/sat-data-viewer](https://kongstad.github.io/sat-data-viewer)
 
 ## Features
 
-- **Interactive Map** - Powered by Mapbox GL JS with satellite basemap
-- **Satellite Data Search** - Query Sentinel-2 imagery by date range, location, and cloud coverage
-- **Visual Preview** - Browse results with thumbnails and metadata
-- **Real-time Display** - View selected satellite imagery directly on the map
-- **Free & Fast** - 100% client-side, no backend required, zero hosting costs
+### Multi-Collection Support
+- **Sentinel-2 L2A** - Optical imagery with 4 band options (TCI, NIR, SWIR, Red Edge)
+- **Landsat C2 L2** - Multispectral imagery with 4 bands (TCI, NIR, SWIR, Thermal)
+- **Sentinel-1 RTC** - SAR radar imagery with VV/VH polarization selection
+- **MODIS 13Q1** - Vegetation indices (NDVI/EVI) at 250m resolution
+- **Copernicus DEM** - Global elevation data with adjustable range visualization
+
+### Interactive Visualization
+- **Band Selection** - Toggle between different spectral bands for each collection
+- **Dynamic Legends** - Color ramps with actual data values for interpretation
+- **Adjustable Ranges** - User-controlled sliders for elevation and thermal visualization
+- **STAC Metadata** - View detailed tile information (platform, EPSG, dates, etc.)
+- **Multiple Base Layers** - Switch between street, satellite, or no base map
+- **Click-to-Search** - Place search area anywhere on the map
+
+### Data & Performance
+- **Real-time Tile Rendering** - COG-based tiles streamed from Microsoft Planetary Computer
+- **Cloud Filtering** - Filter optical imagery by cloud cover percentage
+- **Multi-Select** - Display multiple tiles simultaneously for comparison
+- **100% Client-Side** - No backend required, zero hosting costs
 
 ## Tech Stack
 
-- **Frontend:** React 19 with Hooks (useState, useEffect, useRef)
-- **Build Tool:** Vite 7 (modern, fast development)
-- **Mapping:** Mapbox GL JS
-- **Data Source:** Microsoft Planetary Computer STAC API (free, public)
-- **HTTP Client:** Axios
+- **Frontend:** React 19 with Hooks (useState, useEffect, useRef, useCallback)
+- **Build Tool:** Vite 7.2.4 (modern, fast development)
+- **Mapping:** Leaflet with OpenStreetMap and Esri satellite base layers
+- **Data Source:** Microsoft Planetary Computer STAC API v1 (free, public)
+- **Tile Server:** Microsoft Planetary Computer TiTiler (COG rendering)
+- **HTTP Client:** Axios 1.13.4
 - **Hosting:** GitHub Pages
-- **Styling:** Vanilla CSS with responsive design
+- **Styling:** Vanilla CSS with gradient backgrounds and Earth from Space theme
 
 ## Installation
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Mapbox account (free tier: 50,000 map loads/month)
+- No API keys required - uses free, open tile servers
 
 ### Setup
 
@@ -42,21 +58,7 @@ A free, client-side web application for exploring Sentinel-2 satellite imagery f
    npm install
    ```
 
-3. **Configure Mapbox token**
-   
-   Get your free token at: https://account.mapbox.com/access-tokens/
-   
-   Create a `.env` file in the project root:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` and add your token:
-   ```env
-   VITE_MAPBOX_TOKEN=your_actual_mapbox_token_here
-   ```
-
-4. **Start development server**
+3. **Start development server**
    ```bash
    npm run dev
    ```
@@ -65,13 +67,20 @@ A free, client-side web application for exploring Sentinel-2 satellite imagery f
 
 ## Usage
 
-1. **Pan and zoom** the map to your area of interest
-2. **Set search parameters:**
-   - Start and end dates
-   - Maximum cloud coverage (0-100%)
-3. **Click "Search"** to find satellite imagery
-4. **Browse results** in the left sidebar
-5. **Click an image** to display it on the map
+1. **Select a collection** - Choose from Sentinel-2, Landsat, Sentinel-1 SAR, MODIS, or DEM
+2. **Click "Set Search Point"** and click anywhere on the map to define your search area (20km × 20km)
+3. **Set search parameters:**
+   - Start and end dates (for temporal collections)
+   - Maximum cloud coverage (for optical imagery)
+   - Elevation range (for DEM visualization)
+   - Thermal range (for Landsat thermal band)
+4. **Click "Search"** to find satellite data
+5. **Browse results** in the left sidebar with thumbnails and metadata
+6. **Select images** using checkboxes to display on the map
+7. **Toggle bands** using the band selector buttons (TCI, NIR, SWIR, etc.)
+8. **View metadata** by clicking the info button (ⓘ) on any tile
+9. **Zoom to tile** using the focus button for detailed viewing
+10. **Adjust visualization** using range sliders for elevation/thermal data
 
 ## Project Structure
 
@@ -79,22 +88,22 @@ A free, client-side web application for exploring Sentinel-2 satellite imagery f
 sat-data-viewer/
 ├── src/
 │   ├── components/
-│   │   ├── Map.jsx              # Mapbox map component
-│   │   ├── Map.css
-│   │   ├── SearchBar.jsx        # Search interface
-│   │   ├── SearchBar.css
-│   │   ├── ImageList.jsx        # Results display
-│   │   └── ImageList.css
+│   │   ├── MapLeaflet.jsx       # Leaflet map with tile overlays
+│   │   ├── Map.css              # Map styling and legends
+│   │   ├── SearchBar.jsx        # Search form with collection selector
+│   │   ├── SearchBar.css        # Search bar styling
+│   │   ├── ImageList.jsx        # Results list with band selectors
+│   │   └── ImageList.css        # Image list and band button styling
 │   ├── utils/
-│   │   └── stacApi.js           # STAC API integration
-│   ├── App.jsx                  # Main application
-│   ├── App.css
+│   │   └── stacApi.js           # STAC API integration & formatting
+│   ├── App.jsx                  # Main application & state management
+│   ├── App.css                  # App layout with Earth background
 │   ├── main.jsx                 # React entry point
 │   └── index.css                # Global styles
-├── public/                      # Static assets
-├── .env.example                 # Environment template
-├── vite.config.js              # Vite configuration
-├── package.json                # Dependencies
+├── public/
+│   └── earth_clean.png          # Background image
+├── vite.config.js               # Vite configuration
+├── package.json                 # Dependencies
 └── README.md
 ```
 
@@ -103,47 +112,67 @@ sat-data-viewer/
 ### Component Hierarchy
 
 ```
-App
-├── SearchBar (search form)
-├── ImageList (results display)
-└── Map (Mapbox visualization)
+App (state management)
+├── SearchBar (collection selector, date range, filters, sliders)
+├── ImageList (results with band selectors, metadata, action buttons)
+└── MapLeaflet (Leaflet map with COG tile overlays, legends, info box)
 ```
 
 ### Data Flow
 
-1. User adjusts map → App stores bounding box
-2. User submits search → App queries STAC API
-3. Results returned → App updates ImageList
-4. User selects image → App passes to Map component
-5. Map displays imagery → Mapbox renders tiles
+1. User clicks "Set Search Point" → Map places blue rectangle
+2. User selects collection and parameters → SearchBar controls
+3. User submits search → App queries STAC API with collection filter
+4. Results returned → App formats items and updates ImageList
+5. User selects images and bands → App passes to MapLeaflet
+6. Map renders COG tiles → TiTiler serves tiles with band/colormap parameters
+7. User adjusts ranges → Map re-renders with new rescale values
+8. User clicks info button → Map displays STAC metadata overlay
 
 ### STAC API Integration
 
-The app uses Microsoft Planetary Computer's STAC API:
+The app uses Microsoft Planetary Computer's STAC API v1:
 
 ```javascript
 POST https://planetarycomputer.microsoft.com/api/stac/v1/search
 {
-  "collections": ["sentinel-2-l2a"],
+  "collections": ["sentinel-2-l2a"],  // or landsat-c2-l2, sentinel-1-rtc, etc.
   "bbox": [minLon, minLat, maxLon, maxLat],
-  "datetime": "2024-01-01/2024-12-31",
-  "query": { "eo:cloud_cover": { "lt": 20 } },
+  "datetime": "2024-01-01/2024-12-31",  // omitted for cop-dem-glo-30 (static)
+  "query": { "eo:cloud_cover": { "lt": 20 } },  // only for optical collections
   "limit": 10
 }
 ```
 
-Response is a GeoJSON FeatureCollection with STAC items containing imagery URLs.
+Response is a GeoJSON FeatureCollection with STAC items.
+
+### Tile Rendering
+
+Tiles are rendered on-the-fly by Microsoft Planetary Computer's TiTiler:
+
+```
+https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/
+  WebMercatorQuad/{z}/{x}/{y}@1x?
+  collection={collection}&
+  item={item_id}&
+  assets={band}&
+  rescale={min},{max}&
+  colormap_name={colormap}
+```
+
+Supports band selection, rescaling, and matplotlib colormaps (viridis, inferno, turbo, etc.).
 
 ## Learning Resources
 
 This project demonstrates key React concepts:
 
-- **Components & JSX** - Building reusable UI pieces
-- **Hooks** - useState, useEffect, useRef for state and side effects
-- **Props & Callbacks** - Parent-child communication
-- **API Integration** - Async operations with axios
-- **External Libraries** - Integrating Mapbox GL JS
-- **Environment Variables** - Secure configuration with Vite
+- **Components & JSX** - Building reusable UI pieces with conditional rendering
+- **Hooks** - useState, useEffect, useRef, useCallback for state management and memoization
+- **Props & Callbacks** - Parent-child communication with lifting state up pattern
+- **API Integration** - Async operations with axios and STAC protocol
+- **External Libraries** - Integrating Leaflet mapping library
+- **Dynamic Tile Loading** - COG (Cloud-Optimized GeoTIFF) rendering
+- **Conditional UI** - Showing/hiding controls based on collection and band selection
 
 ## Deployment
 
@@ -168,14 +197,19 @@ This builds the production bundle and publishes to the `gh-pages` branch.
 ### Microsoft Planetary Computer
 
 - **STAC API Docs:** https://planetarycomputer.microsoft.com/docs/reference/stac/
-- **Sentinel-2 Collection:** https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a
-- **No authentication required** - All data is public
+- **TiTiler Docs:** https://planetarycomputer.microsoft.com/docs/reference/titiler/
+- **Collections:**
+  - Sentinel-2 L2A: https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a
+  - Landsat C2 L2: https://planetarycomputer.microsoft.com/dataset/landsat-c2-l2
+  - Sentinel-1 RTC: https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc
+  - MODIS 13Q1: https://planetarycomputer.microsoft.com/dataset/modis-13Q1-061
+  - Copernicus DEM: https://planetarycomputer.microsoft.com/dataset/cop-dem-glo-30
+- **No authentication required** - All data and tile rendering is public
 
-### Mapbox GL JS
+### Leaflet
 
-- **Documentation:** https://docs.mapbox.com/mapbox-gl-js/
-- **Free Tier:** 50,000 map loads/month
-- **Account:** https://account.mapbox.com/
+- **Documentation:** https://leafletjs.com/
+- **Free and open source** - No API keys required
 
 ## Contributing
 
@@ -199,19 +233,22 @@ MIT License - feel free to use this code for learning or your own projects.
 
 ## Acknowledgments
 
-- **Microsoft** - Planetary Computer STAC API and free satellite data access
-- **Mapbox** - Beautiful mapping library and generous free tier
+- **Microsoft** - Planetary Computer STAC API, TiTiler, and free satellite data access
+- **Leaflet** - Open-source mapping library
+- **OpenStreetMap** - Free and open map tiles
+- **Esri** - World Imagery base layer
 - **React Team** - Excellent documentation and developer experience
 - **Vite Team** - Lightning-fast build tooling
 
 ## Future Enhancements
 
-- [ ] Multiple band combinations (true color, false color, NDVI)
-- [ ] Time series analysis and comparison
-- [ ] Download imagery for offline use
-- [ ] Custom area drawing tools
-- [ ] Advanced filtering (season, specific satellites)
-- [ ] Backend integration with Python processing (FastAPI)
+- [ ] Polygon drawing and cropping with download (requires AWS Lambda backend)
+- [ ] Time series animation and temporal comparison
+- [ ] Additional collections (NAIP aerial imagery, HLS)
+- [ ] Computed indices (NDVI, NDWI, EVI) via TiTiler expressions for all optical collections
+- [ ] Export functionality with custom projections
+- [ ] Mosaic multiple tiles into single download
+- [ ] Statistics endpoint for area of interest (mean, min, max values)
 
 ---
 
