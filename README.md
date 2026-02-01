@@ -131,18 +131,20 @@ App (state management)
 
 ### STAC API Integration
 
-The app uses Microsoft Planetary Computer's STAC API v1:
+The app queries different collections based on user selection. Example for Sentinel-2:
 
 ```javascript
 POST https://planetarycomputer.microsoft.com/api/stac/v1/search
 {
-  "collections": ["sentinel-2-l2a"],  // or landsat-c2-l2, sentinel-1-rtc, etc.
+  "collections": ["sentinel-2-l2a"],  // Changes based on dropdown selection
   "bbox": [minLon, minLat, maxLon, maxLat],
   "datetime": "2024-01-01/2024-12-31",  // omitted for cop-dem-glo-30 (static)
   "query": { "eo:cloud_cover": { "lt": 20 } },  // only for optical collections
   "limit": 10
 }
 ```
+
+Other collection values: `landsat-c2-l2`, `sentinel-1-rtc`, `modis-13Q1-061`, `cop-dem-glo-30`
 
 Response is a GeoJSON FeatureCollection with STAC items.
 
