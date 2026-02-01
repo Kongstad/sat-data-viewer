@@ -61,11 +61,9 @@ function App() {
         .map(item => formatStacItem(item, searchParams.collection));
       
       setSearchResults(formattedResults);
-      setSelectedImages([]); // Clear previous selections
+      setSelectedImages([]);
       setCurrentCollection(searchParams.collection);
-      setSelectedBands({}); // Clear band selections
-
-      console.log(`Found ${formattedResults.length} images in the area`);
+      setSelectedBands({});
     } catch (err) {
       console.error('Search error:', err);
       setError('Failed to search for imagery. Please try again.');

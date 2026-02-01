@@ -6,99 +6,34 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw';
+import 'leaflet-draw/dist/leaflet.draw.css';
+import area from '@turf/area';
+import length from '@turf/length';
 import './Map.css';
+import { buildTileUrl, getLegendConfig, getCollection } from '../config/collections';
 
 function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToImage, currentCollection = 'sentinel-2-l2a', selectedBands = {}, elevationRange = { min: -10, max: 150 }, thermalRange = { min: 28000, max: 55000 }, selectedTileInfo = null, onCloseTileInfo }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const overlayLayers = useRef([]); // Changed to array for multiple overlays
-  const drawnRectangle = useRef(null); // Reference to user-drawn search area
+  const overlayLayers = useRef([]);
+  const drawnRectangle = useRef(null);
+  const measurementLayer = useRef(null);
   const [mapReady, setMapReady] = useState(false);
   const [isSatelliteView, setIsSatelliteView] = useState(true);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showLayerMenu, setShowLayerMenu] = useState(false);
-  const [baseLayerType, setBaseLayerType] = useState('satellite'); // 'street', 'satellite', or 'none'
+  const [baseLayerType, setBaseLayerType] = useState('satellite');
+  const [showBoundaries, setShowBoundaries] = useState(true);
 
-  // Helper function to get legend configuration for current view
   const getLegendInfo = () => {
     if (!currentCollection || !selectedImages || selectedImages.length === 0) return null;
     
-    if (currentCollection === 'cop-dem-glo-30') {
-      return {
-        title: 'Elevation',
-        min: `${elevationRange.min}m`,
-        max: `${elevationRange.max}m`,
-        gradient: 'linear-gradient(to right, #0c1c5c, #1e4d8b, #2d7bb6, #3fa855, #7ac74f, #c4d968, #e8c167, #d89a5a, #c4734d, #ffffff)'
-      };
-    }
-    
-    // Get the band from the first selected image
+    const collectionConfig = getCollection(currentCollection);
     const firstImageId = selectedImages[0];
-    const band = selectedBands[firstImageId];
+    const band = selectedBands[firstImageId] || collectionConfig?.defaultBand || 'visual';
     
-    if (currentCollection === 'sentinel-2-l2a') {
-      if (band === 'nir') {
-        return {
-          title: 'Near Infrared',
-          min: '0',
-          max: '4000',
-          gradient: 'linear-gradient(to right, #000004, #420a68, #932667, #dd513a, #fca50a, #fcffa4)' // inferno
-        };
-      } else if (band === 'swir') {
-        return {
-          title: 'Short-Wave IR',
-          min: '0',
-          max: '3000',
-          gradient: 'linear-gradient(to right, #f7fbff, #deebf7, #c6dbef, #9ecae1, #6baed6, #4292c6, #2171b5, #08519c, #08306b)' // blues
-        };
-      } else if (band === 'rededge') {
-        return {
-          title: 'Red Edge',
-          min: '0',
-          max: '3500',
-          gradient: 'linear-gradient(to right, #a50026, #d73027, #f46d43, #fdae61, #fee08b, #ffffbf, #d9ef8b, #a6d96a, #66bd63, #1a9850, #006837)' // rdylgn
-        };
-      }
-    } else if (currentCollection === 'sentinel-1-rtc') {
-      return {
-        title: 'SAR Backscatter',
-        min: '0.0',
-        max: '0.3',
-        gradient: 'linear-gradient(to right, #440154, #482777, #3e4989, #31688e, #26828e, #1f9e89, #35b779, #6ece58, #b5de2b, #fde724)' // viridis
-      };
-    } else if (currentCollection === 'landsat-c2-l2') {
-      if (band === 'nir') {
-        return {
-          title: 'Near Infrared',
-          min: '0',
-          max: '30000',
-          gradient: 'linear-gradient(to right, #000004, #420a68, #932667, #dd513a, #fca50a, #fcffa4)' // inferno
-        };
-      } else if (band === 'swir') {
-        return {
-          title: 'Short-Wave IR',
-          min: '0',
-          max: '30000',
-          gradient: 'linear-gradient(to right, #f7fbff, #deebf7, #c6dbef, #9ecae1, #6baed6, #4292c6, #2171b5, #08519c, #08306b)' // blues
-        };
-      } else if (band === 'thermal') {
-        return {
-          title: 'Thermal IR',
-          min: `${thermalRange.min}`,
-          max: `${thermalRange.max}`,
-          gradient: 'linear-gradient(to right, #30123b, #4777ef, #1ac7ff, #28ed87, #a0fb00, #fca50a, #e62b00, #a50026)' // turbo
-        };
-      }
-    } else if (currentCollection === 'modis-13Q1-061') {
-      return {
-        title: band === 'evi' ? 'EVI' : 'NDVI',
-        min: '-0.2',
-        max: '1.0',
-        gradient: 'linear-gradient(to right, #a50026, #d73027, #f46d43, #fdae61, #fee08b, #ffffbf, #d9ef8b, #a6d96a, #66bd63, #1a9850, #006837)' // rdylgn
-      };
-    }
-    
-    return null;
+    return getLegendConfig(currentCollection, band, { elevationRange, thermalRange });
   };
 
   const legendInfo = getLegendInfo();
@@ -110,8 +45,6 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
 
   useEffect(() => {
     if (map.current) return;
-
-    console.log('Initializing Leaflet map...');
 
     // Create map
     map.current = L.map(mapContainer.current, {
@@ -126,27 +59,108 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
       maxZoom: 19
     }).addTo(map.current);
 
-    console.log('Leaflet map created!');
+    // Initialize measurement layer
+    measurementLayer.current = new L.FeatureGroup();
+    map.current.addLayer(measurementLayer.current);
+
+    // Handle drawing created
+    map.current.on(L.Draw.Event.CREATED, (e) => {
+      const layer = e.layer;
+      measurementLayer.current.addLayer(layer);
+
+      // Calculate and display measurement
+      const geojson = layer.toGeoJSON();
+      let measurement = '';
+
+      if (e.layerType === 'polyline') {
+        const distKm = length(geojson, { units: 'kilometers' });
+        const distMiles = distKm * 0.621371;
+        
+        let metricStr, imperialStr;
+        
+        if (distKm < 1) {
+          metricStr = `${(distKm * 1000).toFixed(1)} m`;
+        } else {
+          metricStr = `${distKm.toFixed(2)} km`;
+        }
+        
+        if (distMiles < 1) {
+          imperialStr = `${(distMiles * 5280).toFixed(1)} ft`;
+        } else {
+          imperialStr = `${distMiles.toFixed(2)} mi`;
+        }
+        
+        measurement = `<strong>Distance</strong><br>${metricStr} / ${imperialStr}`;
+        
+      } else if (e.layerType === 'polygon') {
+        const areaM2 = area(geojson);
+        const areaKm2 = areaM2 / 1000000;
+        const hectares = areaM2 / 10000;
+        const areaFt2 = areaM2 * 10.7639;
+        const acres = areaM2 / 4046.86;
+        const areaMi2 = areaKm2 * 0.386102;
+        
+        let metricStr, imperialStr, hectaresStr;
+        
+        // Metric
+        if (areaKm2 < 0.01) {
+          metricStr = `${areaM2.toFixed(1)} m²`;
+        } else {
+          metricStr = `${areaKm2.toFixed(3)} km²`;
+        }
+        
+        // Imperial
+        if (areaMi2 < 0.01) {
+          if (acres < 1) {
+            imperialStr = `${areaFt2.toFixed(0)} ft²`;
+          } else {
+            imperialStr = `${acres.toFixed(2)} acres`;
+          }
+        } else {
+          imperialStr = `${areaMi2.toFixed(3)} mi²`;
+        }
+        
+        // Hectares
+        hectaresStr = `${hectares.toFixed(2)} ha`;
+        
+        measurement = `<strong>Area</strong><br>${metricStr}<br>${imperialStr}<br>${hectaresStr}`;
+      }
+
+      if (measurement) {
+        layer.bindPopup(measurement, {
+          permanent: false,
+          className: 'measurement-popup'
+        }).openPopup();
+      }
+    });
+
+    // Handle ESC key to cancel drawing
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        // Cancel any active drawing
+        map.current.fire('draw:canceled');
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+
     setMapReady(true);
 
     // Try to get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('Got user location:', position.coords.latitude, position.coords.longitude);
           if (map.current) {
             map.current.setView([position.coords.latitude, position.coords.longitude], 12);
           }
         },
-        (error) => {
-          console.log('Geolocation denied or error:', error.message);
-        },
+        () => {},
         { timeout: 5000, enableHighAccuracy: false }
       );
     }
 
     // Cleanup
     return () => {
+      document.removeEventListener('keydown', handleEscape);
       if (map.current) {
         map.current.remove();
         map.current = null;
@@ -154,7 +168,6 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
     };
   }, []);
 
-  // Place search point and create search area
   const startDrawing = () => {
     if (!map.current) return;
     
@@ -210,7 +223,32 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
     map.current.on('click', onClick);
   };
 
-  // Toggle between street and satellite basemap
+  const startMeasureLine = () => {
+    if (!map.current) return;
+    new L.Draw.Polyline(map.current, {
+      shapeOptions: {
+        color: '#1976D2',
+        weight: 3
+      }
+    }).enable();
+  };
+
+  const startMeasureArea = () => {
+    if (!map.current) return;
+    new L.Draw.Polygon(map.current, {
+      shapeOptions: {
+        color: '#388E3C',
+        weight: 3
+      }
+    }).enable();
+  };
+
+  const clearMeasurements = () => {
+    if (measurementLayer.current) {
+      measurementLayer.current.clearLayers();
+    }
+  };
+
   const selectBasemap = (layerType) => {
     if (!map.current) return;
 
@@ -264,8 +302,6 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
 
     if (selectedImageObjects.length === 0) return;
 
-    console.log(`Adding ${selectedImageObjects.length} satellite image overlays`);
-
     // Add each selected image
     selectedImageObjects.forEach(image => {
       if (!image.bbox || image.bbox.length !== 4) {
@@ -289,60 +325,12 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
           [north, east]  // northeast corner
         ];
         
-        console.log(`Image ${image.id}: bbox [${west.toFixed(2)}, ${south.toFixed(2)}, ${east.toFixed(2)}, ${north.toFixed(2)}]`);
+        const collectionConfig = getCollection(currentCollection);
+        const band = selectedBands[image.id] || collectionConfig?.defaultBand || 'visual';
+        const tileUrl = buildTileUrl(currentCollection, image.id, band, { elevationRange, thermalRange });
         
-        // Determine tile URL based on collection and selected band
-        let tileUrl;
-        if (currentCollection === 'sentinel-1-rtc') {
-          // Sentinel-1 RTC: Use selected band (VV or VH), default to VV
-          const band = selectedBands[image.id] || 'vv';
-          tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=sentinel-1-rtc&item=${image.id}&assets=${band}&asset_bidx=${band}|1&rescale=0,0.3&colormap_name=viridis`;
-        } else if (currentCollection === 'cop-dem-glo-30') {
-          // Copernicus DEM: Use gist_earth colormap (blue water → green → brown/white peaks)
-          // Using dynamic elevation range from user controls
-          tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=cop-dem-glo-30&item=${image.id}&assets=data&asset_bidx=data|1&rescale=${elevationRange.min},${elevationRange.max}&colormap_name=gist_earth`;
-        } else if (currentCollection === 'landsat-c2-l2') {
-          // Landsat C2 L2: Band selection for different visualizations
-          const band = selectedBands[image.id] || 'tci';
-          if (band === 'tci') {
-            // True Color Image (RGB composite)
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=landsat-c2-l2&item=${image.id}&assets=red&assets=green&assets=blue&rescale=7000,14000&rescale=8000,13000&rescale=8000,12000`;
-          } else if (band === 'nir') {
-            // Near Infrared (useful for vegetation analysis)
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=landsat-c2-l2&item=${image.id}&assets=nir08&asset_bidx=nir08|1&rescale=0,30000&colormap_name=inferno`;
-          } else if (band === 'swir') {
-            // Short-Wave Infrared (useful for geology and moisture)
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=landsat-c2-l2&item=${image.id}&assets=swir16&asset_bidx=swir16|1&rescale=0,30000&colormap_name=blues`;
-          } else if (band === 'thermal') {
-            // Thermal Infrared (shows surface temperature) - user adjustable range
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=landsat-c2-l2&item=${image.id}&assets=lwir11&asset_bidx=lwir11|1&rescale=${thermalRange.min},${thermalRange.max}&colormap_name=turbo`;
-          }
-        } else if (currentCollection === 'modis-13Q1-061') {
-          // MODIS Vegetation Indices: NDVI or EVI
-          const band = selectedBands[image.id] || 'ndvi';
-          if (band === 'ndvi') {
-            // NDVI (Normalized Difference Vegetation Index)
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=modis-13Q1-061&item=${image.id}&assets=250m_16_days_NDVI&asset_bidx=250m_16_days_NDVI|1&rescale=-2000,10000&colormap_name=rdylgn`;
-          } else {
-            // EVI (Enhanced Vegetation Index)
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=modis-13Q1-061&item=${image.id}&assets=250m_16_days_EVI&asset_bidx=250m_16_days_EVI|1&rescale=-2000,10000&colormap_name=rdylgn`;
-          }
-        } else {
-          // Sentinel-2: Band selection for different visualizations
-          const band = selectedBands[image.id] || 'visual';
-          if (band === 'visual') {
-            // True Color Image (RGB composite)
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=sentinel-2-l2a&item=${image.id}&assets=visual&asset_bidx=visual|1,2,3&nodata=0`;
-          } else if (band === 'nir') {
-            // Near Infrared (B08 - vegetation analysis) - warm colors for vegetation
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=sentinel-2-l2a&item=${image.id}&assets=B08&asset_bidx=B08|1&rescale=0,4000&colormap_name=inferno`;
-          } else if (band === 'swir') {
-            // Short-Wave Infrared (B11 - moisture/geology) - cool colors for moisture
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=sentinel-2-l2a&item=${image.id}&assets=B11&asset_bidx=B11|1&rescale=0,3000&colormap_name=blues`;
-          } else if (band === 'rededge') {
-            // Red Edge (B05 - vegetation stress/health)
-            tileUrl = `https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/WebMercatorQuad/{z}/{x}/{y}@1x?collection=sentinel-2-l2a&item=${image.id}&assets=B05&asset_bidx=B05|1&rescale=0,3500&colormap_name=rdylgn`;
-          }
+        if (currentCollection === 'modis-13Q1-061') {
+          map.current.setMaxBounds(null);
         }
         
         const imageLayer = L.tileLayer(tileUrl, {
@@ -353,13 +341,16 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
           tileSize: 256
         }).addTo(map.current);
 
-        // Add blue border rectangle (no click handler needed)
-        const borderLayer = L.rectangle(bounds, {
-          color: '#0066ff',
-          weight: 2,
-          fillOpacity: 0,
-          interactive: false
-        }).addTo(map.current);
+        // Add blue border rectangle if boundaries are enabled
+        let borderLayer = null;
+        if (showBoundaries) {
+          borderLayer = L.rectangle(bounds, {
+            color: '#0066ff',
+            weight: 2,
+            fillOpacity: 0,
+            interactive: false
+          }).addTo(map.current);
+        }
 
         overlayLayers.current.push({
           image: imageLayer,
@@ -370,9 +361,7 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
         console.error('Error adding satellite overlay:', error);
       }
     });
-
-    console.log('Satellite overlays added successfully');
-  }, [selectedImages, searchResults, mapReady, currentCollection, selectedBands, elevationRange, thermalRange]);
+  }, [selectedImages, searchResults, mapReady, currentCollection, selectedBands, elevationRange, thermalRange, showBoundaries]);
 
   // Function to zoom to a specific image
   const zoomToImage = useCallback((imageId) => {
@@ -442,6 +431,51 @@ function Map({ selectedImages = [], searchResults = [], onBboxChange, onZoomToIm
           >
             {isDrawing ? 'Click on Map...' : 'Set Search Point'}
           </button>
+          {drawnRectangle.current && (
+            <button 
+              className="clear-search-button" 
+              onClick={() => {
+                if (drawnRectangle.current) {
+                  map.current.removeLayer(drawnRectangle.current);
+                  drawnRectangle.current = null;
+                  if (onBboxChange) {
+                    onBboxChange(null);
+                  }
+                }
+              }}
+            >
+              Clear Search Point
+            </button>
+          )}
+          <button 
+            className="toggle-boundaries-button" 
+            onClick={() => setShowBoundaries(!showBoundaries)}
+          >
+            {showBoundaries ? 'Hide Boundaries' : 'Show Boundaries'}
+          </button>
+          <div className="measurement-controls">
+            <button className="measure-line-button" onClick={startMeasureLine} title="Measure Distance (Line)">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 17L17 3M3 17L5 15M17 3L15 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="3" cy="17" r="1.5" fill="currentColor"/>
+                <circle cx="17" cy="3" r="1.5" fill="currentColor"/>
+              </svg>
+            </button>
+            <button className="measure-area-button" onClick={startMeasureArea} title="Measure Area (Polygon)">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 3L17 3L17 17L3 17L3 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                <circle cx="3" cy="3" r="1.5" fill="currentColor"/>
+                <circle cx="17" cy="3" r="1.5" fill="currentColor"/>
+                <circle cx="17" cy="17" r="1.5" fill="currentColor"/>
+                <circle cx="3" cy="17" r="1.5" fill="currentColor"/>
+              </svg>
+            </button>
+            <button className="clear-measurements-button" onClick={clearMeasurements} title="Clear All Measurements">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
         </>
       )}
 

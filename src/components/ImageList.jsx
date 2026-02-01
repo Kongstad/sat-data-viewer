@@ -4,6 +4,7 @@
 
 import './ImageList.css';
 import { getSignedUrl } from '../utils/stacApi';
+import { getCollection, getBandConfig } from '../config/collections';
 
 function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, selectedImages = [], isLoading, currentCollection, selectedBands = {}, onBandChange, onShowInfo }) {
   
@@ -95,117 +96,52 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
                 <div className="image-date">
                   {item.collection === 'cop-dem-glo-30' ? 'Elevation Data' : item.date}
                 </div>
-                {item.collection === 'sentinel-2-l2a' && (
-                  <>
-                    <div className="image-cloud">
-                      Cloud: {item.cloudCover}%
+                {(() => {
+                  const config = getCollection(item.collection);
+                  if (!config) return null;
+                  
+                  return (
+                    <>
+                      {config.metadata.showCloudCover && item.cloudCover !== undefined && (
+                        <div className="image-cloud">
+                          Cloud: {item.cloudCover}%
+                        </div>
+                      )}
+                      {config.metadata.showTileId && (
+                        <div className="image-tile" title={item.id}>
+                          Tile: {item.id.split('_').slice(-2, -1)[0] || item.id.substring(0, 10)}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+                
+                {/* Band selector */}
+                {(() => {
+                  const config = getCollection(item.collection);
+                  if (!config || !config.bandLayout || config.bandLayout === 'none') return null;
+                  
+                  const bands = Object.keys(config.bands);
+                  const defaultBand = config.defaultBand;
+                  const layoutClass = config.bandLayout === 'grid' ? 'band-selector-grid' : 'band-selector';
+                  
+                  return (
+                    <div className={layoutClass}>
+                      {bands.map(bandId => {
+                        const bandConfig = config.bands[bandId];
+                        return (
+                          <button
+                            key={bandId}
+                            className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === defaultBand) && bandId === defaultBand ? 'active' : selectedBands[item.id] === bandId ? 'active' : ''}`}
+                            onClick={() => onBandChange(item.id, bandId)}
+                          >
+                            {bandConfig.label}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div className="image-tile" title={item.id}>
-                      Tile: {item.id.split('_').slice(-2, -1)[0] || item.id.substring(0, 10)}
-                    </div>
-                  </>
-                )}
-                {item.collection === 'landsat-c2-l2' && (
-                  <div className="image-cloud">
-                    Cloud: {item.cloudCover}%
-                  </div>
-                )}
-                
-                {/* Band selector for Sentinel-2 */}
-                {item.collection === 'sentinel-2-l2a' && (
-                  <div className="band-selector-grid">
-                    <button
-                      className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === 'visual') ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'visual')}
-                    >
-                      TCI
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'nir' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'nir')}
-                    >
-                      IR
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'swir' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'swir')}
-                    >
-                      SWIR
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'rededge' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'rededge')}
-                    >
-                      Red Edge
-                    </button>
-                  </div>
-                )}
-                
-                {/* Band selector for Sentinel-1 */}
-                {item.collection === 'sentinel-1-rtc' && (
-                  <div className="band-selector">
-                    <button
-                      className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === 'vv') ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'vv')}
-                    >
-                      Show VV
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'vh' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'vh')}
-                    >
-                      Show VH
-                    </button>
-                  </div>
-                )}
-                
-                {/* Band selector for Landsat */}
-                {item.collection === 'landsat-c2-l2' && (
-                  <div className="band-selector-grid">
-                    <button
-                      className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === 'tci') ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'tci')}
-                    >
-                      TCI
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'nir' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'nir')}
-                    >
-                      NIR
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'swir' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'swir')}
-                    >
-                      SWIR
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'thermal' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'thermal')}
-                    >
-                      Thermal
-                    </button>
-                  </div>
-                )}
-                
-                {/* Band selector for MODIS */}
-                {item.collection === 'modis-13Q1-061' && (
-                  <div className="band-selector">
-                    <button
-                      className={`band-button ${(!selectedBands[item.id] || selectedBands[item.id] === 'ndvi') ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'ndvi')}
-                    >
-                      NDVI
-                    </button>
-                    <button
-                      className={`band-button ${selectedBands[item.id] === 'evi' ? 'active' : ''}`}
-                      onClick={() => onBandChange(item.id, 'evi')}
-                    >
-                      EVI
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               <div className="image-actions">

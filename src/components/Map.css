@@ -94,7 +94,7 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  background: var(--button-primary-bg);
   color: white;
   border: none;
   border-radius: 4px;
@@ -105,10 +105,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all 0.2s;
   z-index: 1000;
+  width: 180px;
+  text-align: center;
 }
 
 .draw-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+  background: linear-gradient(135deg, var(--primary-blue-dark) 0%, #0D47A1 100%);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
 }
 
@@ -117,9 +119,127 @@
 }
 
 .draw-button:disabled {
-  background: #455A64;
+  background: var(--gray-700);
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+.clear-search-button {
+  position: absolute;
+  top: 120px;
+  right: 20px;
+  background: var(--button-danger-bg);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+  z-index: 1000;
+  width: 180px;
+  text-align: center;
+}
+
+.clear-search-button:hover {
+  background: linear-gradient(135deg, var(--error-red) 0%, #B71C1C 100%);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+.clear-search-button:active {
+  transform: translateY(1px);
+}
+
+.toggle-boundaries-button {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+  z-index: 1000;
+  width: 180px;
+  text-align: center;
+}
+
+.toggle-boundaries-button:hover {
+  background: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-800) 100%);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+}
+
+.toggle-boundaries-button:active {
+  transform: translateY(1px);
+}
+
+.measurement-controls {
+  position: absolute;
+  top: 90px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+}
+
+.measure-line-button,
+.measure-area-button,
+.clear-measurements-button {
+  background: rgba(25, 118, 210, 0.9);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.measure-line-button:hover {
+  background: rgba(21, 101, 192, 0.95);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.measure-area-button {
+  background: rgba(56, 142, 60, 0.9);
+}
+
+.measure-area-button:hover {
+  background: rgba(46, 125, 50, 0.95);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.clear-measurements-button {
+  background: rgba(211, 47, 47, 0.9);
+}
+
+.clear-measurements-button:hover {
+  background: rgba(198, 40, 40, 0.95);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.measure-line-button:active,
+.measure-area-button:active,
+.clear-measurements-button:active {
+  transform: translateY(0);
 }
 
 .map-loading {

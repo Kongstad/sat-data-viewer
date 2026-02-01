@@ -4,12 +4,15 @@
 
 import { useState } from 'react';
 import './SearchBar.css';
+import { getCollection, getAllCollectionIds } from '../config/collections';
 
 function SearchBar({ onSearch, isLoading, elevationRange, onElevationRangeChange, thermalRange, onThermalRangeChange, selectedBands = {} }) {
   const [startDate, setStartDate] = useState('2024-06-01');
   const [endDate, setEndDate] = useState('2024-07-31');
   const [cloudCover, setCloudCover] = useState(20);
   const [satellite, setSatellite] = useState('sentinel-2-l2a');
+
+  const collectionConfig = getCollection(satellite);
 
   const handleStartDateChange = (e) => {
     const newStartDate = e.target.value;
@@ -26,7 +29,6 @@ function SearchBar({ onSearch, isLoading, elevationRange, onElevationRangeChange
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Call the parent's onSearch function with current values
     onSearch({
       startDate,
       endDate,
@@ -48,16 +50,19 @@ function SearchBar({ onSearch, isLoading, elevationRange, onElevationRangeChange
             onChange={(e) => setSatellite(e.target.value)}
             disabled={isLoading}
           >
-            <option value="sentinel-2-l2a">Sentinel-2 (Optical)</option>
-            <option value="sentinel-1-rtc">Sentinel-1 RTC (SAR)</option>
-            <option value="landsat-c2-l2">Landsat C2 L2 (Multispectral)</option>
-            <option value="modis-13Q1-061">MODIS Vegetation Indices</option>
-            <option value="cop-dem-glo-30">Copernicus DEM (Elevation)</option>
+            {getAllCollectionIds().map(collectionId => {
+              const collection = getCollection(collectionId);
+              return (
+                <option key={collectionId} value={collectionId}>
+                  {collection.displayName || collection.name}
+                </option>
+              );
+            })}
           </select>
         </div>
 
-        {/* Date Range Inputs - Only for time-series data (not DEM) */}
-        {satellite !== 'cop-dem-glo-30' && (
+        {/* Date Range Inputs */}
+        {collectionConfig?.hasDateFilter && (
           <>
             <div className="form-group">
               <label htmlFor="start-date">Start Date:</label>
@@ -83,8 +88,8 @@ function SearchBar({ onSearch, isLoading, elevationRange, onElevationRangeChange
           </>
         )}
 
-        {/* Cloud Coverage Slider - For Sentinel-2 and Landsat */}
-        {(satellite === 'sentinel-2-l2a' || satellite === 'landsat-c2-l2') && (
+        {/* Cloud Coverage Slider */}
+        {collectionConfig?.hasCloudFilter && (
           <div className="form-group">
             <label htmlFor="cloud-cover">
               Max Cloud Cover: {cloudCover}%

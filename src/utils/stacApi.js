@@ -3,6 +3,7 @@
  */
 
 import axios from 'axios';
+import { getCollection } from '../config/collections';
 
 const STAC_API_URL = 'https://planetarycomputer.microsoft.com/api/stac/v1';
 
@@ -23,28 +24,25 @@ export function getProviderName() {
  */
 export async function searchSatelliteData(bbox, startDate, endDate, collection = 'sentinel-2-l2a', cloudCover = 20, limit = 10) {
   try {
+    const config = getCollection(collection);
+    
     const searchParams = {
       collections: [collection],
       bbox: bbox,
       limit: limit
     };
 
-    // Exclude datetime for static datasets like DEM
-    if (collection !== 'cop-dem-glo-30') {
+    if (config?.hasDateFilter) {
       searchParams.datetime = `${startDate}/${endDate}`;
     }
 
-    // Cloud cover filter applies only to optical collections
-    if (collection === 'sentinel-2-l2a' || collection === 'landsat-c2-l2') {
+    if (config?.hasCloudFilter) {
       searchParams.query = {
         'eo:cloud_cover': { lt: cloudCover }
       };
     }
     
-    // POST request to STAC API
     const response = await axios.post(`${STAC_API_URL}/search`, searchParams);
-
-    console.log(`Microsoft Planetary Computer - Collection: ${collection} - Found ${response.data.features?.length || 0} results`);
 
     return response.data;
   } catch (error) {
@@ -99,11 +97,6 @@ export function getThumbnailUrl(item) {
   // Try visual band as fallback
   if (item.assets?.visual?.href) {
     return item.assets.visual.href;
-  }
-  
-  // Log available assets for debugging
-  if (item.assets) {
-    console.log('No thumbnail found for item:', item.id, 'Available assets:', Object.keys(item.assets));
   }
   
   return null;
