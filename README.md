@@ -17,25 +17,30 @@ Client-side web application for exploring satellite data collections from Micros
 - **Band Selection** - Toggle between different spectral bands for each collection
 - **Dynamic Legends** - Color ramps with actual data values for interpretation
 - **Adjustable Ranges** - User-controlled sliders for elevation and thermal visualization
+- **Measurement Tools** - Distance (km/miles) and area (km²/acres/hectares) measurements with geodesic accuracy
 - **STAC Metadata** - View detailed tile information (platform, EPSG, dates, etc.)
 - **Multiple Base Layers** - Switch between street, satellite, or no base map
 - **Click-to-Search** - Place search area anywhere on the map
+- **Boundary Toggle** - Show/hide image boundaries for cleaner viewing
 
 ### Data & Performance
 - **Real-time Tile Rendering** - COG-based tiles streamed from Microsoft Planetary Computer
 - **Cloud Filtering** - Filter optical imagery by cloud cover percentage
 - **Multi-Select** - Display multiple tiles simultaneously for comparison
 - **Client-Side Architecture** - No backend required
+- **Config-Driven Design** - Centralized collection metadata for easy maintenance
 
 ## Tech Stack
 
 - **Frontend:** React 19 with Hooks (useState, useEffect, useRef, useCallback)
 - **Build Tool:** Vite 7.2.4
 - **Mapping:** Leaflet with OpenStreetMap and Esri satellite base layers
+- **Drawing:** Leaflet Draw for measurement tools
+- **Geospatial:** Turf.js for geodesic distance and area calculations
 - **Data Source:** Microsoft Planetary Computer STAC API v1
 - **Tile Server:** Microsoft Planetary Computer TiTiler
 - **HTTP Client:** Axios 1.13.4
-- **Styling:** CSS3
+- **Styling:** CSS3 with custom properties
 
 ## Installation
 
@@ -69,33 +74,16 @@ npm run dev
 8. **View metadata** by clicking the info button (ⓘ) on any tile
 9. **Zoom to tile** using the focus button for detailed viewing
 10. **Adjust visualization** using range sliders for elevation/thermal data
+11. **Measure distances and areas** using the tools at top-left (ESC to cancel)
+12. **Toggle boundaries** to hide/show image borders for cleaner viewing
 
 ## Project Structure
 
-```
-sat-data-viewer/
-├── src/
-│   ├── components/
-│   │   ├── MapLeaflet.jsx       # Leaflet map with tile overlays
-│   │   ├── Map.css              # Map styling and legends
-│   │   ├── SearchBar.jsx        # Search form with collection selector
-│   │   ├── SearchBar.css        # Search bar styling
-│   │   ├── ImageList.jsx        # Results list with band selectors
-│   │   └── ImageList.css        # Image list and band button styling
-│   ├── utils/
-│   │   └── stacApi.js           # STAC API integration & formatting
-│   ├── App.jsx                  # Main application & state management
-│   ├── App.css                  # App layout with Earth background
-│   ├── main.jsx                 # React entry point
-│   └── index.css                # Global styles
-├── public/
-│   └── earth_clean.png          # Background image
-├── vite.config.js               # Vite configuration
-├── package.json                 # Dependencies
-└── README.md
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed project structure and component documentation.
 
 ## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design, data flow, and component interactions.
 
 ### Component Hierarchy
 
@@ -103,7 +91,7 @@ sat-data-viewer/
 App (state management)
 ├── SearchBar (collection selector, date range, filters, sliders)
 ├── ImageList (results with band selectors, metadata, action buttons)
-└── MapLeaflet (Leaflet map with COG tile overlays, legends, info box)
+└── MapLeaflet (Leaflet map with COG tile overlays, legends, measurements)
 ```
 
 ### Data Flow
@@ -148,49 +136,16 @@ https://planetarycomputer.microsoft.com/api/data/v1/item/tiles/
   colormap_name={colormap}
 ```
 
-## Deployment
+## Contributing
 
-```bash
-npm run build
-npm run deploy
-```
-
-## API Reference
-
-### Microsoft Planetary Computer
-
-- **STAC API:** https://planetarycomputer.microsoft.com/docs/reference/stac/
-- **TiTiler:** https://planetarycomputer.microsoft.com/docs/reference/titiler/
-- **Collections:**
-  - Sentinel-2 L2A: https://planetarycomputer.microsoft.com/dataset/sentinel-2-l2a
-  - Landsat C2 L2: https://planetarycomputer.microsoft.com/dataset/landsat-c2-l2
-  - Sentinel-1 RTC: https://planetarycomputer.microsoft.com/dataset/sentinel-1-rtc
-  - MODIS 13Q1: https://planetarycomputer.microsoft.com/dataset/modis-13Q1-061
-  - Copernicus DEM: https://planetarycomputer.microsoft.com/dataset/cop-dem-glo-30
-
-### Leaflet
-
-- **Documentation:** https://leafletjs.com/
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT License
+MIT License - see [LICENSE.md](LICENSE.md) for details.
 
 ## Acknowledgments
 
-- Microsoft Planetary Computer
-- Leaflet
-- OpenStreetMap
-- Esri
-- React
-- Vite
-
-## Future Enhancements
-
-- [ ] Polygon drawing and cropping with download (requires AWS Lambda backend)
-- [ ] Time series animation and temporal comparison
-- [ ] Additional collections (NAIP aerial imagery, HLS)
-- [ ] Computed indices (NDVI, NDWI, EVI) via TiTiler expressions for all optical collections
-- [ ] Export functionality with custom projections
-- [ ] Mosaic multiple tiles into single download
-- [ ] Statistics endpoint for area of interest (mean, min, max values)
+- Microsoft Planetary Computer for STAC API and TiTiler
+- Leaflet and OpenStreetMap contributors
+- Esri for satellite base layer
