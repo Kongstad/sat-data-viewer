@@ -1,0 +1,114 @@
+/**
+ * API utilities for communicating with the download backend
+ */
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
+/**
+ * Get available assets for a collection from the backend
+ * @param {string} collectionId - STAC collection ID
+ * @returns {Promise<Object>} Collection assets info
+ */
+export async function getCollectionAssets(collectionId) {
+  const response = await fetch(`${BACKEND_URL}/collections/${collectionId}/assets`);
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+    throw new Error(error.detail || 'Failed to get collection assets');
+  }
+  
+  return response.json();
+}
+
+/**
+ * Download a satellite tile
+ * @param {Object} params - Download parameters
+ * @param {string} params.collection - STAC collection ID
+ * @param {string} params.itemId - STAC item ID
+ * @param {string} params.assetKey - Asset/band to download
+ * @param {Array<number>} [params.bbox] - Bounding box [minLon, minLat, maxLon, maxLat]
+ * @param {string} params.format - Output format ('geotiff' or 'png')
+ * @param {string} [params.rescale] - Rescale range for PNG (e.g., '0,4000')
+ * @param {string} [params.colormap] - Matplotlib colormap name for PNG
+ * @param {Function} [onProgress] - Progress callback
+ * @param {AbortSignal} [signal] - AbortSignal for request cancellation
+ * @returns {Promise<Blob>} Downloaded file as Blob
+ */
+export async function downloadTile({ collection, itemId, assetKey, bbox, format, rescale, colormap }, onProgress, signal) {
+  const response = await fetch(`${BACKEND_URL}/download`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      collection,
+      item_id: itemId,
+      asset_key: assetKey,
+      bbox: bbox || null,
+      format: format,
+      rescale: rescale || null,
+      colormap: colormap || null,
+    }),
+    signal: signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Download failed' }));
+    throw new Error(error.detail || 'Download failed');
+  }
+
+  // Get the blob from response
+  const blob = await response.blob();
+  
+  // Get filename from Content-Disposition header if available
+  const contentDisposition = response.headers.get('Content-Disposition');
+  let filename = `${collection}_${itemId}_${assetKey}.${format === 'geotiff' ? 'tif' : 'png'}`;
+  
+  if (contentDisposition) {
+    const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
+    if (match) {
+      filename = match[1];
+    }
+  }
+
+  return { blob, filename };
+}
+
+/**
+ * Trigger browser download of a blob
+ * @param {Blob} blob - File blob
+ * @param {string} filename - Filename for download
+ */
+export function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  
+  // Cleanup after a short delay
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+/**
+ * Check if the backend is available
+ * @returns {Promise<boolean>}
+ */
+export async function checkBackendHealth() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000), // 5 second timeout
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export { BACKEND_URL };

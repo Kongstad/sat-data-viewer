@@ -6,7 +6,7 @@ import './ImageList.css';
 import { getSignedUrl } from '../utils/stacApi';
 import { getCollection, getBandConfig } from '../config/collections';
 
-function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, selectedImages = [], isLoading, currentCollection, selectedBands = {}, onBandChange, onShowInfo }) {
+function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, selectedImages = [], isLoading, currentCollection, selectedBands = {}, onBandChange, onShowInfo, onDownload }) {
   
   if (isLoading) {
     return (
@@ -178,13 +178,9 @@ function ImageList({ items, onToggleImage, onClearSelections, onZoomToImage, sel
                 {/* Download GeoTIFF button */}
                 <button 
                   className="download-button"
-                  disabled
-                  onClick={() => {
-                    alert('Download feature coming soon!\n\nWill be implemented with serverless backend (AWS Lambda) to handle authentication and file delivery.');
-                  }}
-                  title="Download feature planned - requires serverless backend"
-                  aria-label="Download (coming soon)"
-                  style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                  onClick={() => onDownload && onDownload(item)}
+                  title="Download this tile"
+                  aria-label="Download tile"
                 >
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M10 3V13M10 13L6 9M10 13L14 9" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

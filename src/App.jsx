@@ -7,6 +7,7 @@ import { useState, useCallback, useRef } from 'react';
 import Map from './components/MapLeaflet';
 import SearchBar from './components/SearchBar';
 import ImageList from './components/ImageList';
+import DownloadModal from './components/DownloadModal';
 import { searchSatelliteData, formatStacItem } from './utils/stacApi';
 import './App.css';
 
@@ -22,6 +23,7 @@ function App() {
   const [elevationRange, setElevationRange] = useState({ min: -10, max: 150 });
   const [thermalRange, setThermalRange] = useState({ min: 28000, max: 55000 });
   const [selectedTileInfo, setSelectedTileInfo] = useState(null);
+  const [downloadItem, setDownloadItem] = useState(null);
 
   const handleSearch = async (searchParams) => {
     let searchBbox = currentBbox;
@@ -118,6 +120,13 @@ function App() {
     setSelectedTileInfo(tileData);
   };
 
+  /**
+   * Handle opening download modal for a tile
+   */
+  const handleDownload = (item) => {
+    setDownloadItem(item);
+  };
+
   return (
     <div className="app">
       {/* Header */}
@@ -150,7 +159,10 @@ function App() {
             selectedImages={selectedImages}
             isLoading={isLoading}            currentCollection={currentCollection}
             selectedBands={selectedBands}
-            onBandChange={handleBandChange}            onShowInfo={handleShowInfo}          />
+            onBandChange={handleBandChange}
+            onShowInfo={handleShowInfo}
+            onDownload={handleDownload}
+          />
         </aside>
 
         {/* Map Area */}
@@ -162,9 +174,19 @@ function App() {
             onZoomToImage={handleZoomToImage}            currentCollection={currentCollection}
             selectedBands={selectedBands}            elevationRange={elevationRange}            thermalRange={thermalRange}
             selectedTileInfo={selectedTileInfo}
-            onCloseTileInfo={() => setSelectedTileInfo(null)}          />
+            onCloseTileInfo={() => setSelectedTileInfo(null)}
+          />
         </main>
       </div>
+
+      {/* Download Modal */}
+      {downloadItem && (
+        <DownloadModal
+          item={downloadItem}
+          collection={currentCollection}
+          onClose={() => setDownloadItem(null)}
+        />
+      )}
 
       {/* Error Display */}
       {error && (
@@ -184,7 +206,9 @@ function App() {
           </a> | 
           Developed by: <a href="https://github.com/Kongstad" target="_blank" rel="noopener noreferrer">
             Peter Kongstad
-          </a>
+          </a> | 
+          Hosted on: <a href="https://pages.github.com/" target="_blank" rel="noopener noreferrer">GitHub Pages</a> | 
+          Processing by: <a href="https://aws.amazon.com/lambda/" target="_blank" rel="noopener noreferrer">AWS Lambda</a>
         </p>
       </footer>
     </div>
