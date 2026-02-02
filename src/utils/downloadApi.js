@@ -34,7 +34,7 @@ export async function getCollectionAssets(collectionId) {
  * @param {AbortSignal} [signal] - AbortSignal for request cancellation
  * @returns {Promise<Blob>} Downloaded file as Blob
  */
-export async function downloadTile({ collection, itemId, assetKey, bbox, format, rescale, colormap }, onProgress, signal) {
+export async function downloadTile({ collection, itemId, assetKey, bbox, format, rescale, colormap, turnstileToken }, onProgress, signal) {
   const response = await fetch(`${BACKEND_URL}/download`, {
     method: 'POST',
     headers: {
@@ -48,6 +48,7 @@ export async function downloadTile({ collection, itemId, assetKey, bbox, format,
       format: format,
       rescale: rescale || null,
       colormap: colormap || null,
+      turnstile_token: turnstileToken || null,
     }),
     signal: signal,
   });

@@ -3,10 +3,12 @@
  * Displays in the center of the map with band/format selection options
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { downloadTile, triggerDownload, checkBackendHealth } from '../utils/downloadApi';
 import { getCollection } from '../config/collections';
 import './DownloadModal.css';
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAACW5aVJzaeavtikq';
 
 function DownloadModal({ item, collection, onClose }) {
   const [selectedAsset, setSelectedAsset] = useState(null);
@@ -15,6 +17,43 @@ function DownloadModal({ item, collection, onClose }) {
   const [error, setError] = useState(null);
   const [backendAvailable, setBackendAvailable] = useState(null);
   const [abortController, setAbortController] = useState(null);
+  const [turnstileToken, setTurnstileToken] = useState(null);
+  const turnstileRef = useRef(null);
+  const turnstileWidgetId = useRef(null);
+
+  // Load Turnstile script and render widget
+  useEffect(() => {
+    // Load Turnstile script if not already loaded
+    if (!window.turnstile) {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.onload = () => renderTurnstile();
+      document.head.appendChild(script);
+    } else {
+      renderTurnstile();
+    }
+
+    return () => {
+      // Cleanup widget on unmount
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetId.current);
+      }
+    };
+  }, []);
+
+  const renderTurnstile = useCallback(() => {
+    if (turnstileRef.current && window.turnstile && !turnstileWidgetId.current) {
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: (token) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(null),
+        'error-callback': () => setTurnstileToken(null),
+        theme: 'light',
+        size: 'normal',
+      });
+    }
+  }, []);
 
   // Get collection config for available bands
   const collectionConfig = getCollection(collection);
@@ -44,6 +83,11 @@ function DownloadModal({ item, collection, onClose }) {
       return;
     }
 
+    if (!turnstileToken) {
+      setError('Please complete the security check');
+      return;
+    }
+
     setIsDownloading(true);
     setError(null);
 
@@ -67,6 +111,7 @@ function DownloadModal({ item, collection, onClose }) {
         format: selectedFormat,
         rescale: bandConfig.rescale || null,
         colormap: bandConfig.colormap || null,
+        turnstileToken: turnstileToken,
       }, filename, controller.signal);
 
       // Trigger download and close
@@ -82,6 +127,11 @@ function DownloadModal({ item, collection, onClose }) {
       }
       setIsDownloading(false);
       setAbortController(null);
+      // Reset turnstile for retry
+      setTurnstileToken(null);
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId.current);
+      }
     }
   };
 
@@ -164,7 +214,11 @@ function DownloadModal({ item, collection, onClose }) {
           {/* Backend status warning */}
           {backendAvailable === false && (
             <div className="backend-warning">
-              Download backend is not available. Please try again later.
+              <strong>Download Service Unavailable</strong>
+              <p style={{ margin: '8px 0 0 0', fontSize: '12px' }}>
+                The download backend is currently offline. You can still explore satellite imagery through the map viewer.
+                This may be due to maintenance or budget limits.
+              </p>
             </div>
           )}
 
@@ -227,6 +281,14 @@ function DownloadModal({ item, collection, onClose }) {
             </div>
           )}
 
+          {/* Turnstile widget */}
+          <div className="download-section turnstile-section">
+            <div ref={turnstileRef}></div>
+            {!turnstileToken && !isDownloading && (
+              <div className="turnstile-hint">Please complete the security check above</div>
+            )}
+          </div>
+
           {/* Error display */}
           {error && (
             <div className="download-error">
@@ -246,7 +308,7 @@ function DownloadModal({ item, collection, onClose }) {
           <button 
             className="download-button-primary"
             onClick={handleDownload}
-            disabled={isDownloading || backendAvailable === false || !selectedAsset || downloadsDisabled}
+            disabled={isDownloading || backendAvailable === false || !selectedAsset || downloadsDisabled || !turnstileToken}
           >
             {isDownloading ? (
               <>
