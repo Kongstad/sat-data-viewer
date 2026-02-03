@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { downloadTile, triggerDownload, checkBackendHealth } from '../utils/downloadApi';
+import { downloadTile, downloadFromUrl, checkBackendHealth } from '../utils/downloadApi';
 import { getCollection } from '../config/collections';
 import './DownloadModal.css';
 
@@ -102,8 +102,8 @@ function DownloadModal({ item, collection, onClose }) {
 
       const filename = `${collection}_${item.id}_${assetKey}.${selectedFormat === 'geotiff' ? 'tif' : 'png'}`;
 
-      // Direct download (sync endpoint)
-      const { blob } = await downloadTile({
+      // Get presigned URL from backend
+      const response = await downloadTile({
         collection: collection,
         itemId: item.id,
         assetKey: assetKey,
@@ -114,8 +114,8 @@ function DownloadModal({ item, collection, onClose }) {
         turnstileToken: turnstileToken,
       }, filename, controller.signal);
 
-      // Trigger download and close
-      triggerDownload(blob, filename);
+      // Redirect to presigned URL for download
+      downloadFromUrl(response.download_url, response.filename);
       setIsDownloading(false);
       setAbortController(null);
       onClose();

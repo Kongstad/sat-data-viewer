@@ -32,7 +32,7 @@ export async function getCollectionAssets(collectionId) {
  * @param {string} [params.colormap] - Matplotlib colormap name for PNG
  * @param {Function} [onProgress] - Progress callback
  * @param {AbortSignal} [signal] - AbortSignal for request cancellation
- * @returns {Promise<Blob>} Downloaded file as Blob
+ * @returns {Promise<Object>} Object with download_url and filename
  */
 export async function downloadTile({ collection, itemId, assetKey, bbox, format, rescale, colormap, turnstileToken }, onProgress, signal) {
   const response = await fetch(`${BACKEND_URL}/download`, {
@@ -58,21 +58,28 @@ export async function downloadTile({ collection, itemId, assetKey, bbox, format,
     throw new Error(error.detail || 'Download failed');
   }
 
-  // Get the blob from response
-  const blob = await response.blob();
-  
-  // Get filename from Content-Disposition header if available
-  const contentDisposition = response.headers.get('Content-Disposition');
-  let filename = `${collection}_${itemId}_${assetKey}.${format === 'geotiff' ? 'tif' : 'png'}`;
-  
-  if (contentDisposition) {
-    const match = contentDisposition.match(/filename="?([^";\n]+)"?/);
-    if (match) {
-      filename = match[1];
-    }
-  }
+  // Backend now returns JSON with presigned URL
+  const data = await response.json();
+  return data; // { download_url, filename, size_bytes, expires_in_seconds }
+}
 
-  return { blob, filename };
+/**
+ * Download file from presigned URL
+ * @param {string} url - Presigned S3 URL
+ * @param {string} filename - Filename for download
+ */
+export function downloadFromUrl(url, filename) {
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  
+  // Cleanup
+  setTimeout(() => {
+    document.body.removeChild(link);
+  }, 100);
 }
 
 /**
