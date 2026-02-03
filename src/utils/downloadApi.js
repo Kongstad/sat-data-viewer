@@ -27,14 +27,12 @@ export async function getCollectionAssets(collectionId) {
  * @param {string} params.itemId - STAC item ID
  * @param {string} params.assetKey - Asset/band to download
  * @param {Array<number>} [params.bbox] - Bounding box [minLon, minLat, maxLon, maxLat]
- * @param {string} params.format - Output format ('geotiff' or 'png')
- * @param {string} [params.rescale] - Rescale range for PNG (e.g., '0,4000')
- * @param {string} [params.colormap] - Matplotlib colormap name for PNG
+ * @param {string} params.turnstileToken - Cloudflare Turnstile token
  * @param {Function} [onProgress] - Progress callback
  * @param {AbortSignal} [signal] - AbortSignal for request cancellation
  * @returns {Promise<Object>} Object with download_url and filename
  */
-export async function downloadTile({ collection, itemId, assetKey, bbox, format, rescale, colormap, turnstileToken }, onProgress, signal) {
+export async function downloadTile({ collection, itemId, assetKey, bbox, turnstileToken }, onProgress, signal) {
   const response = await fetch(`${BACKEND_URL}/download`, {
     method: 'POST',
     headers: {
@@ -45,9 +43,6 @@ export async function downloadTile({ collection, itemId, assetKey, bbox, format,
       item_id: itemId,
       asset_key: assetKey,
       bbox: bbox || null,
-      format: format,
-      rescale: rescale || null,
-      colormap: colormap || null,
       turnstile_token: turnstileToken || null,
     }),
     signal: signal,

@@ -12,7 +12,6 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAA
 
 function DownloadModal({ item, collection, onClose }) {
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [selectedFormat, setSelectedFormat] = useState('geotiff');
   const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState(null);
   const [backendAvailable, setBackendAvailable] = useState(null);
@@ -59,9 +58,6 @@ function DownloadModal({ item, collection, onClose }) {
   const collectionConfig = getCollection(collection);
   const availableBands = collectionConfig ? Object.keys(collectionConfig.bands) : [];
   
-  // Check if PNG format is supported for this collection (disable for SAR)
-  const supportsPNG = collectionConfig?.type !== 'sar';
-  
   // Check if downloads are disabled for this collection (SAR files too large)
   const downloadsDisabled = collectionConfig?.type === 'sar';
 
@@ -100,7 +96,7 @@ function DownloadModal({ item, collection, onClose }) {
       const bandConfig = collectionConfig.bands[selectedAsset];
       const assetKey = bandConfig.assets[0]; // Use first asset for the band
 
-      const filename = `${collection}_${item.id}_${assetKey}.${selectedFormat === 'geotiff' ? 'tif' : 'png'}`;
+      const filename = `${collection}_${item.id}_${assetKey}.tif`;
 
       // Get presigned URL from backend
       const response = await downloadTile({
@@ -108,9 +104,6 @@ function DownloadModal({ item, collection, onClose }) {
         itemId: item.id,
         assetKey: assetKey,
         bbox: null, // Full tile download
-        format: selectedFormat,
-        rescale: bandConfig.rescale || null,
-        colormap: bandConfig.colormap || null,
         turnstileToken: turnstileToken,
       }, filename, controller.signal);
 
@@ -242,33 +235,10 @@ function DownloadModal({ item, collection, onClose }) {
             </div>
           </div>
 
-          {/* Format selection */}
+          {/* Format info */}
           <div className="download-section">
-            <h3>Select Format</h3>
-            {!supportsPNG && (
-              <div className="format-note">
-                PNG conversion is disabled for SAR data (slow processing)
-              </div>
-            )}
-            <div className="format-options">
-              <button
-                className={`format-option ${selectedFormat === 'geotiff' ? 'selected' : ''}`}
-                onClick={() => setSelectedFormat('geotiff')}
-                disabled={isDownloading}
-              >
-                <span className="format-name">GeoTIFF</span>
-                <span className="format-desc">With georeferencing</span>
-              </button>
-              {supportsPNG && (
-                <button
-                  className={`format-option ${selectedFormat === 'png' ? 'selected' : ''}`}
-                  onClick={() => setSelectedFormat('png')}
-                  disabled={isDownloading}
-                >
-                  <span className="format-name">PNG</span>
-                  <span className="format-desc">Smaller, no geo data</span>
-                </button>
-              )}
+            <div className="format-note">
+              Downloads are provided as GeoTIFF format with full georeferencing.
             </div>
           </div>
 
