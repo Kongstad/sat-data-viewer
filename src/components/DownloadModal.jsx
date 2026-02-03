@@ -182,7 +182,7 @@ function DownloadModal({ item, collection, onClose }) {
           {/* SAR download disabled warning */}
           {downloadsDisabled && (
             <div className="backend-warning">
-              Downloads are currently disabled for Sentinel-1 SAR data due to file size constraints (1.2 GB per band) in this demo environment.
+              Downloads are currently disabled for Sentinel-1 SAR data due to file size constraints in this demo environment.
             </div>
           )}
 
