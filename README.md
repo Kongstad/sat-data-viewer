@@ -30,11 +30,19 @@ Client-side web application for exploring satellite data collections from Micros
 - **Click-to-Search** - Place search area anywhere on the map
 - **Boundary Toggle** - Show/hide image boundaries for cleaner viewing
 
+### Download & Export
+- **GeoTIFF Downloads** - Download full resolution satellite tiles with georeferencing
+- **Band Selection** - Choose specific bands (TCI, NIR, Red Edge, etc.) for download
+- **Bot Protection** - Cloudflare Turnstile verification for secure downloads
+- **Auto-Cleanup** - Downloaded files automatically deleted from server after 10 minutes
+
+> **Note:** Download functionality operates in controlled mode - the backend is enabled during demonstrations to manage AWS costs.
+
 ### Data & Performance
 - **Real-time Tile Rendering** - COG-based tiles streamed from Microsoft Planetary Computer
 - **Cloud Filtering** - Filter optical imagery by cloud cover percentage
 - **Multi-Select** - Display multiple tiles simultaneously for comparison
-- **Client-Side Architecture** - No backend required
+- **Hybrid Architecture** - Client-side viewing, optional serverless backend for downloads
 - **Config-Driven Design** - Centralized collection metadata for easy maintenance
 
 ## Tech Stack
