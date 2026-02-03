@@ -47,7 +47,7 @@ Client-side web application for exploring satellite data collections from Micros
 
 ## Tech Stack
 
-- **Frontend:** React 19 with Hooks (useState, useEffect, useRef, useCallback)
+- **Frontend:** React 19
 - **Build Tool:** Vite 7.2.4
 - **Mapping:** Leaflet with OpenStreetMap and Esri satellite base layers
 - **Drawing:** Leaflet Draw for measurement tools

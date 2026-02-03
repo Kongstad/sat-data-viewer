@@ -1,6 +1,6 @@
 # Architecture Documentation
 
-Satellite Data Viewer is a client-side React app that queries Microsoft Planetary Computer's STAC API and renders COG tiles via TiTiler. Built on a config-driven pattern with centralized collection metadata.
+Satellite Data Viewer is a hybrid React app with client-side viewing and optional serverless backend for downloads. Queries Microsoft Planetary Computer's STAC API and renders COG tiles via TiTiler. Built on a config-driven pattern with centralized collection metadata.
 
 ## System Flow
 
@@ -51,11 +51,13 @@ sat-data-viewer/
 │   │   ├── SearchBar.jsx        # Search form with collection selector
 │   │   ├── SearchBar.css        # Search bar styling
 │   │   ├── ImageList.jsx        # Results list with band selectors
-│   │   └── ImageList.css        # Image list and band button styling
+│   │   ├── ImageList.css        # Image list and band button styling
+│   │   └── DownloadModal.jsx    # Download modal with Turnstile verification
 │   ├── config/
 │   │   └── collections.js       # Centralized satellite collection config
 │   ├── utils/
-│   │   └── stacApi.js           # STAC API integration & formatting
+│   │   ├── stacApi.js           # STAC API integration & formatting
+│   │   └── downloadApi.js       # Backend download API client
 │   ├── App.jsx                  # Main application & state management
 │   ├── App.css                  # App layout with Earth background
 │   ├── main.jsx                 # React entry point
@@ -84,11 +86,17 @@ Displays search results with thumbnails and metadata. Band selector layout is dr
 ### MapLeaflet.jsx
 Leaflet map with COG tile rendering, legends, measurement tools, and base layer switching. Uses `buildTileUrl()` from config to construct TiTiler URLs. Measurement tools use leaflet-draw + Turf.js for geodesic calculations.
 
+### DownloadModal.jsx
+Download modal with band selection and Cloudflare Turnstile bot protection. Communicates with serverless backend (AWS Lambda) to process and download full-resolution GeoTIFF files. Files auto-delete after 10 minutes.
+
 ### collections.js
 Single source of truth for all satellite collections. Defines bands, rescale values, colormaps, legends, filters, and metadata display options. Components read this config instead of hardcoding collection logic.
 
 ### stacApi.js
 Handles STAC API queries. Reads collection config to determine which filters to include (datetime, cloud cover). Formats raw STAC items for app consumption.
+
+### downloadApi.js
+Backend API client for downloads. Sends requests to AWS Lambda with Turnstile tokens. Handles file downloads and error states.
 
 ## Component Hierarchy
 
@@ -96,7 +104,8 @@ Handles STAC API queries. Reads collection config to determine which filters to 
 App (state management)
 ├── SearchBar (collection selector, date range, filters, sliders)
 ├── ImageList (results with band selectors, metadata, action buttons)
-└── MapLeaflet (Leaflet map with COG tile overlays, legends, measurements)
+├── MapLeaflet (Leaflet map with COG tile overlays, legends, measurements)
+└── DownloadModal (download UI with Turnstile, band selection)
 ```
 
 ## Data Flow
@@ -109,6 +118,9 @@ App (state management)
 6. Map renders COG tiles → TiTiler serves tiles with band/colormap parameters
 7. User adjusts ranges → Map re-renders with new rescale values
 8. User clicks info button → Map displays STAC metadata overlay
+9. User clicks download → DownloadModal opens with Turnstile verification
+10. User completes Turnstile and submits → Backend processes and returns GeoTIFF
+11. File auto-deleted from S3 after 10 minutes
 
 ## STAC API Integration
 
@@ -178,5 +190,10 @@ The UI automatically updates. No component code changes needed.
 - Leaflet + leaflet-draw
 - Turf.js (@turf/area, @turf/length)
 - Axios 1.13.4
+- Cloudflare Turnstile (for bot protection)
 - CSS custom properties for theming
+
+Backend (serverless):
+- AWS Lambda (FastAPI + Mangum)
+- See [sat-data-viewer-backend](https://github.com/Kongstad/sat-data-viewer-backend) repository
 
